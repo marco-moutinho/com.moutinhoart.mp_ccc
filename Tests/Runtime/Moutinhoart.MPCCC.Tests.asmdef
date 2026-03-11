@@ -1,0 +1,11 @@
+{
+    "name": "Moutinhoart.MPCCC.Tests",
+    "references": [
+        "Moutinhoart.MPCCC"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

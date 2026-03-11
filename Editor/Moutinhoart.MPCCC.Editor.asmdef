@@ -1,0 +1,10 @@
+{
+    "name": "Moutinhoart.MPCCC.Editor",
+    "references": [
+      "Moutinhoart.MPCCC"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Moutinhoart.MPCCC.Editor.Tests",
+    "references": [
+        "Moutinhoart.MPCCC.Editor",
+        "Moutinhoart.MPCCC"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
