@@ -1,8 +1,7 @@
 using MP_CCC.Enums;
 using UnityEngine;
 
-// Created on 27-Feb-2026
-// Last Change on 03-Mar-2026
+// Created on 27-Feb-2026 | Last change on [ 01 - May - 2026 ]
 namespace MP_CCC
 {
     [RequireComponent(typeof(CharacterController))]
@@ -16,13 +15,21 @@ namespace MP_CCC
         private Vector3 _FinalMovementVector;
         private bool _isGrounded;
         private Vector3 _GroundNormal;
+        private float _currentDecelerationRate;
+        private float _currentAccelerationRate;
 
-        protected float _CurrentMovementSpeed;
-        protected float _currentJumpHeight;
-        protected EMovementState _lastTickMovementState;
-        protected EMovementState _currentMovementState;
+        protected bool _isCrouched;
 
-        protected struct FCastParams
+        //protected bool BUseAcceleration = false;
+
+        private float _targetCurrentMovementSpeed;
+        private float _currentMovementSpeed;
+
+        private float _currentJumpHeight;
+        private EMovementState _lastTickMovementState;
+        private EMovementState _currentMovementState;
+
+        public struct FCastParams
         {
             public Vector3 StartLocation;
             public Vector3 Direction;
@@ -34,7 +41,7 @@ namespace MP_CCC
         protected FCastParams _ceilingCastParams;
 
         [SerializeField]
-        protected LayerMask _ceilingLayerMask;
+        private LayerMask _ceilingLayerMask;
 
         //rto,,,
         private float _jumpQuequeDuration;
@@ -45,6 +52,11 @@ namespace MP_CCC
         private Vector3 _JumpApexLocation;
         private Vector3 _LandedLocation;
         private float _OnAirTimeElapsed;
+
+        [SerializeField] private bool _drawGizmos = true;
+
+        [SerializeField]
+        private bool _sendDebugMsg = false;
         private void OnValidate()
         {
 #if UNITY_EDITOR
@@ -64,19 +76,26 @@ namespace MP_CCC
         {
             _lastTickMovementState = _currentMovementState;
 
-            if (_currentMovementState == EMovementState.Jumping)
-            {
-                Method_CheckCeiling();
-            }
+            //if (_currentMovementState == EMovementState.Jumping)
+            //{
+            //    Method_CheckCeiling();
+            //}
 
+            // calculate movement vector
             Method_CalculateMovementVector();
+
+            // apply movement
             Method_Move();
 
-            if ( _jumpQuequeTimer >= 0.0f )
+            if (_jumpQuequeTimer >= 0.0f)
             {
                 _jumpQuequeTimer -= Time.deltaTime;
 
-                Debug.Log("Queque = " + _jumpQuequeTimer);
+                //Debug.Log("Queque = " + _jumpQuequeTimer);
+            }
+            if (_currentMovementState == EMovementState.Jumping)
+            {
+                Method_CheckCeiling();
             }
         }
 
@@ -84,16 +103,6 @@ namespace MP_CCC
         // added on 02-mar-2026
         protected virtual void Method_CalculateMovementVector()
         {
-            // calculate velocity vector
-            //if (_isGrounded)
-            //{
-            //    _gravityVector = Vector3.zero;
-            //}
-            //else
-            //{
-            //    _gravityVector.y += _gravityForce * Time.deltaTime;
-            //}
-
             switch (_currentMovementState)
             {
                 case EMovementState.Grounded:
@@ -102,7 +111,7 @@ namespace MP_CCC
                     /// chamada pelo input to jogador, logo a solução pode passar por criar uma var que pode ter 2 valores, significando um que o jogador deu input e esta a espera que seja resolvido, e o outro valor que o pedido...
                     /// foi resolvido
                     //_gravityVector = new Vector3(0, 0, 0);
-                    if(_isWaitingToResolveJump == false)
+                    if (_isWaitingToResolveJump == false)
                     {
                         _gravityVector = new Vector3(0, 0, 0);
                     }
@@ -111,7 +120,6 @@ namespace MP_CCC
                         _gravityVector = new Vector3(0, _gravityVector.y, 0);
                         //_isWaitingToResolveJump = false; // <- aqui funciona mas e que tal ficar resolvido onStartJump?
                     }
-
                     break;
 
                 case EMovementState.Falling:
@@ -123,11 +131,10 @@ namespace MP_CCC
                     break;
             }
 
-
             // calculate final movement vector
-            _velocityVector = (_gravityVector + (_MovementDirection * _CurrentMovementSpeed));
+            _velocityVector = (_gravityVector + (_MovementDirection * _currentMovementSpeed));
 
-            if(_velocityVector.y  <= 0 && _isGrounded)
+            if (_velocityVector.y <= 0 && _isGrounded)
             {
                 _FinalMovementVector = Vector3.ProjectOnPlane(_velocityVector, _GroundNormal);
             }
@@ -135,6 +142,7 @@ namespace MP_CCC
             {
                 _FinalMovementVector = _velocityVector;
             }
+            //Debug.Log("Velocity.y = " + _velocityVector.y);
         }
 
         protected virtual void Method_Move()
@@ -145,7 +153,7 @@ namespace MP_CCC
         // added on 03-Mar-2026
         public virtual void Method_Jump()
         {
-            Debug.Log("Method_Jump()");
+            if (_sendDebugMsg) { Debug.Log("Method_Jump()"); }
 
             if (_isGrounded)
             {
@@ -155,20 +163,25 @@ namespace MP_CCC
                 _gravityVector.y = Mathf.Sqrt(_currentJumpHeight * -2 * _gravityForce);
             }
 
-            Debug.Log("Start Jump Queque!!!!!");    
+            //Debug.Log("Start Jump Queque!!!!!");    
             _jumpQuequeTimer = _jumpQuequeDuration;
         }
 
         // added on 06-Mar-2026
         protected virtual void Method_CheckCeiling()
         {
-            _ceilingCastParams.StartLocation = transform.position + _characterController.center +  ( transform.up * ( ( _characterController.height * 0.5f)  - _characterController.radius) );
+            _ceilingCastParams.StartLocation = transform.position + _characterController.center + (transform.up * ((_characterController.height * 0.5f) - _characterController.radius));
             _ceilingCastParams.Direction = transform.up;
             _ceilingCastParams.Range = _characterController.skinWidth;
-            _ceilingCastParams.layer = _ceilingLayerMask; 
+            _ceilingCastParams.layer = _ceilingLayerMask;
 
             if (Physics.SphereCast(origin: _ceilingCastParams.StartLocation, radius: _characterController.radius, direction: _ceilingCastParams.Direction, hitInfo: out _ceilingCastParams.hit, maxDistance: _ceilingCastParams.Range, layerMask: _ceilingCastParams.layer, queryTriggerInteraction: _ceilingCastParams.query))
             {
+                // to solve the hit ceiling while jump and imediatly down, cause jump "buffer" it jumps emidiatly on land, so this is a quick fix, but i want a more roboust solution
+                // cause imagine that I hit a high ceiling, I may want to jump anyway, so yup, thos just cancel the "_isWaitingToResolveJump"
+                //_isWaitingToResolveJump = false;
+
+                _jumpQuequeTimer = 0;
                 _gravityVector.y = 0.0f;
             }
         }
@@ -186,7 +199,8 @@ namespace MP_CCC
         // added on 03-Mar-2026
         public void Method_SetCurrentMovementSpeed(in float inValue)
         {
-            _CurrentMovementSpeed = inValue;
+            //_targetCurrentMovementSpeed = inValue;
+            _currentMovementSpeed = inValue;
         }
 
         // added on 03-Mar-2026
@@ -207,40 +221,48 @@ namespace MP_CCC
             _GroundNormal = InValue;
         }
 
+        // added on 15-Mar-2026
+        public void Method_ReceiveGravityForce(in float InValue)
+        {
+            _gravityForce = -InValue;
+        }
+
+        // added on 15-Mar-2026
+        public void Method_SetCurrentAccelerationRate(in float inValue)
+        { _currentAccelerationRate = inValue; }
+
+        // added on 15-Mar-2026
+        public void Method_SetCurrentDecelerationRate(in float inValue)
+        { _currentDecelerationRate = inValue; }
+
         public virtual void Method_HandleMovementState()
         {
-            //switch (_currentMovementState)
-            //{
-            //    case EMovementState.Grounded:
-            //        break;
-            //}
-
-            // set "_lastTickMovementState" before calculate/set the new  movementState
-            //_lastTickMovementState = _currentMovementState;
-
-            if( _isGrounded && _gravityVector.y <= 0f) { _currentMovementState = EMovementState.Grounded; }
-            if( _isGrounded && _gravityVector.y > 0f) { _currentMovementState = EMovementState.Jumping; }
-            if( _isGrounded == false && _gravityVector.y <= 0f ) { _currentMovementState = EMovementState.Falling; } 
-            if( _isGrounded == false && _gravityVector.y > 0f) { _currentMovementState = EMovementState.Jumping; }
+            // "State Machine" - define state based on "physics" state
+            if (_isGrounded && _gravityVector.y <= 0f) { _currentMovementState = EMovementState.Grounded; }
+            if (_isGrounded && _gravityVector.y > 0f) { _currentMovementState = EMovementState.Jumping; }
+            if (_isGrounded == false && _gravityVector.y <= 0f) { _currentMovementState = EMovementState.Falling; }
+            if (_isGrounded == false && _gravityVector.y > 0f) { _currentMovementState = EMovementState.Jumping; }
 
             // debug vars...
             if (_isGrounded == false)
             {
                 _OnAirTimeElapsed += Time.deltaTime;
             }
-            else { _OnAirTimeElapsed = 0;
+            else
+            {
+                _OnAirTimeElapsed = 0;
             }
 
 
             // Handle onEnter moveStates:
             //...
-            if(_lastTickMovementState != _currentMovementState)
+            if (_lastTickMovementState != _currentMovementState)
             {
                 switch (_currentMovementState)
                 {
                     // Landing condition
                     case EMovementState.Grounded:
-                        if(_lastTickMovementState == EMovementState.Falling)
+                        if (_lastTickMovementState == EMovementState.Falling)
                         {
                             Method_OnLanded();
                         }
@@ -268,33 +290,35 @@ namespace MP_CCC
         // created on 04-Mar-2026
         protected virtual void Method_OnStartFalling()
         {
-            Debug.Log("Start Falling");
+            //Debug.Log("Start Falling");
             _JumpApexLocation = transform.position;
-            Debug.Log("Jump height : " + (_JumpApexLocation - _JumpStartLocation).magnitude);
+            //Debug.Log("Jump height : " + (_JumpApexLocation - _JumpStartLocation).magnitude);
         }
 
         // created on 04-Mar-2026
         protected virtual void Method_OnStartJumping()
         {
-            Debug.Log("Start Jump!");
+            //Debug.Log("Start Jump!");
             _isWaitingToResolveJump = false;
-            
+
         }
 
         // created on 04-Mar-2026
         protected virtual void Method_OnLanded()
         {
             // Debugger
-            Debug.Log("Landed!!");
+            //Debug.Log("Landed!!");
             _LandedLocation = transform.position;
-            
+
             // input queque timer has terminated
-            if( _jumpQuequeTimer > 0.0f)
+            if (_jumpQuequeTimer > 0.0f)
             {
                 // reset its value
-                _jumpQuequeTimer = -1.0f;   
+                _jumpQuequeTimer = -1.0f;
                 // call jump
+                if (_sendDebugMsg) { Debug.Log(this + " : Jump Buffer !!"); }
                 Method_Jump();
+
             }
         }
 
@@ -306,37 +330,40 @@ namespace MP_CCC
 
         private void OnDrawGizmos()
         {
-            Gizmos.color = colorMoveDir;
-            Vector3 LcLine_A_Start = transform.position;
+            if (_drawGizmos)
+            {
+                Gizmos.color = colorMoveDir;
+                Vector3 LcLine_A_Start = transform.position;
 
-            // Movement Direction
-            Vector3 LcLine_A_End = LcLine_A_Start + (_MovementDirection * 2);
-            Gizmos.DrawLine(LcLine_A_Start, LcLine_A_End);
+                // Movement Direction
+                Vector3 LcLine_A_End = LcLine_A_Start + (_MovementDirection * 2);
+                Gizmos.DrawLine(LcLine_A_Start, LcLine_A_End);
 
-            // Final Movement Direction
-            Gizmos.DrawLine(LcLine_A_Start, LcLine_A_Start + _FinalMovementVector.normalized * 2);
+                // Final Movement Direction
+                Gizmos.DrawLine(LcLine_A_Start, LcLine_A_Start + _FinalMovementVector.normalized * 2);
 
-            Gizmos.color = colorForward;
-            Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2);
+                Gizmos.color = colorForward;
+                Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2);
 
-            Gizmos.color = Color.ghostWhite;
-            Gizmos.DrawWireSphere(_JumpStartLocation, 0.3f);
-            Vector3 lcGhostVector = new Vector3(_JumpStartLocation.x, _JumpApexLocation.y, _JumpStartLocation.z);
-            Gizmos.DrawWireSphere(lcGhostVector, 0.3f);
-            Gizmos.DrawLine(_JumpStartLocation, lcGhostVector);
-            Gizmos.color = Color.orange;
-            Gizmos.DrawWireSphere(_JumpApexLocation, 0.3f);
-            Gizmos.DrawLine(_JumpStartLocation, _JumpApexLocation);
+                Gizmos.color = Color.ghostWhite;
+                Gizmos.DrawWireSphere(_JumpStartLocation, 0.3f);
+                Vector3 lcGhostVector = new Vector3(_JumpStartLocation.x, _JumpApexLocation.y, _JumpStartLocation.z);
+                Gizmos.DrawWireSphere(lcGhostVector, 0.3f);
+                Gizmos.DrawLine(_JumpStartLocation, lcGhostVector);
+                Gizmos.color = Color.orange;
+                Gizmos.DrawWireSphere(_JumpApexLocation, 0.3f);
+                Gizmos.DrawLine(_JumpStartLocation, _JumpApexLocation);
 
-            Gizmos.color = colorCeilingTraceColor;
+                Gizmos.color = colorCeilingTraceColor;
 
-            Gizmos.DrawWireSphere(_ceilingCastParams.StartLocation, _characterController.radius);
+                Gizmos.DrawWireSphere(_ceilingCastParams.StartLocation, _characterController.radius);
 
-            Gizmos.DrawWireSphere(_ceilingCastParams.StartLocation + (transform.up * _characterController.skinWidth), _characterController.radius);
+                Gizmos.DrawWireSphere(_ceilingCastParams.StartLocation + (transform.up * _characterController.skinWidth), _characterController.radius);
 
-            Gizmos.color = colorCeilingHitColor;
-            Gizmos.DrawWireSphere(_ceilingCastParams.hit.point, 0.3f);
-            Gizmos.DrawLine(_ceilingCastParams.StartLocation, _ceilingCastParams.hit.point);
+                Gizmos.color = colorCeilingHitColor;
+                Gizmos.DrawWireSphere(_ceilingCastParams.hit.point, 0.3f);
+                Gizmos.DrawLine(_ceilingCastParams.StartLocation, _ceilingCastParams.hit.point);
+            }
         }
     }
-}   
+}

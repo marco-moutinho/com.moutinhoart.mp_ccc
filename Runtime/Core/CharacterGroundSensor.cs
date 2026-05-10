@@ -2,7 +2,7 @@ using UnityEngine;
 namespace MP_CCC
 {
     // Created on 02-Mar-2026
-    // last change on dd-mmm-yyyy
+    // [ 08 - May - 2026 ] #LastChanged
 
     public class CharacterGroundSensor : MonoBehaviour
     {
@@ -30,6 +30,8 @@ namespace MP_CCC
         protected Vector3 _GroundNormal;
         protected float _GroundAngle;
 
+        [SerializeField] private bool _drawGizmos = true;
+
         // added on 02-Mar-2026
         public virtual void Method_Execute()
         {
@@ -54,7 +56,8 @@ namespace MP_CCC
         }
 
         // added on 02-Mar-2026
-        public virtual void Method_IsGrounded(out bool outValue)
+        // [ 08 - May - 2026 ] #LastChanged
+        public virtual void Method_ReturnIsGrounded(out bool outValue)
         {
             outValue = _isGrounded;
         }
@@ -93,24 +96,27 @@ namespace MP_CCC
 
         protected virtual void OnDrawGizmos()
         {
-            // Draw CastSphere
-            Gizmos.color = _colorSphereCast;
-            float lcRadius = _sphereCastRadius * _radiusMultiplier;
-            Gizmos.DrawWireSphere(_StartPoint, lcRadius);
+            if (_drawGizmos)
+            {
+                // Draw CastSphere
+                Gizmos.color = _colorSphereCast;
+                float lcRadius = _sphereCastRadius * _radiusMultiplier;
+                Gizmos.DrawWireSphere(_StartPoint, lcRadius);
 
-            Gizmos.DrawWireSphere( _StartPoint + (-transform.up * _Range), lcRadius);
+                Gizmos.DrawWireSphere(_StartPoint + (-transform.up * _Range), lcRadius);
 
-            Gizmos.DrawLine(_StartPoint, _StartPoint + (-transform.up * _Range));
+                Gizmos.DrawLine(_StartPoint, _StartPoint + (-transform.up * _Range));
 
-            // Draw Hit
-            Gizmos.color = _colorHit;
-            Gizmos.DrawWireSphere(_sensorHit.point, 0.25f);
+                // Draw Hit
+                Gizmos.color = _colorHit;
+                Gizmos.DrawWireSphere(_sensorHit.point, 0.25f);
 
-            // Ground Normal
-            Gizmos.DrawLine(_SnapToGroundHit.point, _SnapToGroundHit.point + _SnapToGroundHit.normal * 2);
+                // Ground Normal
+                Gizmos.DrawLine(_SnapToGroundHit.point, _SnapToGroundHit.point + _SnapToGroundHit.normal * 2);
 
-            // SnapToGround Line
-            Gizmos.DrawLine(_StartPoint, _StartPoint + -transform.up * 2);
+                // SnapToGround Line
+                Gizmos.DrawLine(_StartPoint, _StartPoint + -transform.up * 2);
+            }
         }
     }
 }

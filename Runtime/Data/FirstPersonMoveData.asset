@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c18460a5a012b2459db7ef32a0da9c9, type: 3}
+  m_Name: FirstPersonMoveData
+  m_EditorClassIdentifier: Moutinhoart.MPCCC::CharacterMovementData
+  walkSpeed: 3
+  sprintSpeed: 6
+  crouchSpeed: 2.5
+  crouchSprintSpeed: 3
+  jumpHeight: 2
+  jumpInputBuffer: 0.06
+  stCaracterControllerCapsuleSettings:
+    standHeight: 2
+    radius: 0
+    crouchHeight: 1.5
+    physicsChecksLayerMask:
+      serializedVersion: 2
+      m_Bits: 503
+  stLookSettings:
+    maxPitch: 80
+    minPitch: -90
+    rotationSmoothFactor: 23
+  holdCrouch: 0
+  povSmoothTime: 0.05
