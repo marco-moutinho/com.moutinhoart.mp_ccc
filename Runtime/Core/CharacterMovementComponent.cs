@@ -18,8 +18,6 @@ namespace MP_CCC
         private float _currentDecelerationRate;
         private float _currentAccelerationRate;
 
-        protected bool _isCrouched;
-
         //protected bool BUseAcceleration = false;
 
         private float _targetCurrentMovementSpeed;

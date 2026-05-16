@@ -9,7 +9,7 @@ namespace MP_CCC
         [Header("[ Parameters ]")]
 
         [SerializeField, Min(0.0f)]
-        protected float _Range = 0.09f;
+        protected float _Range = 0.17f;
 
         [SerializeField]
         protected float _radiusMultiplier = 1f;

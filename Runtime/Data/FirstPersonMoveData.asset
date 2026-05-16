@@ -21,7 +21,7 @@ MonoBehaviour:
   stCaracterControllerCapsuleSettings:
     standHeight: 2
     radius: 0
-    crouchHeight: 1.5
+    crouchHeight: 1.2
     physicsChecksLayerMask:
       serializedVersion: 2
       m_Bits: 503

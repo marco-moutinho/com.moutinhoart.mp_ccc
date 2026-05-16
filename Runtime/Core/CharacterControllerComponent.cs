@@ -1,7 +1,7 @@
 using UnityEngine;
 using MP_CCC.Data;
 // Created on 27-Feb-2026
-// [ 08 - May - 2026 ] #Changed
+// [ 16 - May - 2026 ] #Changed
 
 /// TO DO LIST
 /// [ ] - Change ground check from Raycast to SphereOverlap ?
@@ -61,7 +61,6 @@ namespace MP_CCC
 
         protected bool _isCrouched = false;
         protected bool _isCrouching = false;
-        private bool _isUncrouching = false;
 
         private RaycastHit _uncrouchHitInfo;
 
@@ -121,6 +120,7 @@ namespace MP_CCC
             Method_HandleLook();
 
             // CharacterMovement
+            if(_isCrouching == false) { Method_UnCrouch(); }
             Method_HandleGround();
             Method_HandleMove();
 
@@ -250,6 +250,7 @@ namespace MP_CCC
             _jumpHeight = _characterControllerData.jumpHeight;
         }
 
+        [SerializeField]protected float _topOffset;
         private void Method_StoreCrouchValues()
         {
             float currentVerticalBottom = _characterController.center.y - (_characterController.height * 0.5f);
@@ -279,7 +280,7 @@ namespace MP_CCC
         public virtual void Method_Crouch()
         {
             _isCrouched = true;
-
+            _isCrouching = true;
             // Apply changes to CharacterCapsule
             _characterController.center = _crouchCenterLocalPosition;
             _characterController.height = _characterControllerData.stCaracterControllerCapsuleSettings.crouchHeight;
@@ -290,11 +291,13 @@ namespace MP_CCC
         // [ 09 - May - 2026 ] #Added
         public virtual void Method_UnCrouch()
         {
+            _isCrouching = false;
+
             if (Method_CheckIfCanUnCrouch()) { }
             else { return; }
 
             _isCrouched = false;
-            //_YawPivot.localPosition = _standingPovLocalPosition;
+            
             _characterController.center = _standCenterLocalPosition;
             _characterController.height = _characterControllerData.stCaracterControllerCapsuleSettings.standHeight;
 
@@ -361,6 +364,13 @@ namespace MP_CCC
                 Gizmos.color = Color.white;
                 Gizmos.DrawWireSphere(capsuleBot, _characterController.radius);
                 Gizmos.DrawWireSphere(capsuleTop, _characterController.radius);
+
+                // debug if can UnCroucj
+                if (_isCrouching == false && _isCrouched == true)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(capsuleTop, _characterController.radius);
+                }
             }
         }
     }
